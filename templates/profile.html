@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Записи автора: {{ username.get_full_name }}{% endblock %}
+{% block content %}
+<main role="main" class="container">
+        <div class="row">
+                <div class="col-md-3 mb-3 mt-1">
+                        <div class="card">
+                                <div class="card-body">
+                                        <div class="h2">
+                                            {{ username.get_full_name }}
+                                        </div>
+                                        <div class="h3 text-muted">
+                                                @{{ username.username }}
+                                        </div>
+                                </div>
+                                <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">
+                                                <div class="h6 text-muted">
+                                                Подписчиков: XXX <br />
+                                                Подписан: XXX
+                                                </div>
+                                        </li>
+                                        <li class="list-group-item">
+                                                <div class="h6 text-muted">
+                                                    Записей: {{ username.posts.count }}
+                                                </div>
+                                        </li>
+                                </ul>
+                        </div>
+                </div>
+    
+                <div class="col-md-9">                
+    
+                    {% for post in page %}
+                        <div class="card mb-3 mt-1 shadow-sm">
+                                <div class="card-body">
+                                        <p class="card-text">
+                                                <a href="{% url 'profile' post.author %}"><strong class="d-block text-gray-dark">@{{ post.author.username }}</strong></a>
+                                                {{ post.text }}
+                                        </p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                                <div class="btn-group ">
+                                                        <a class="btn btn-sm text-muted" href="{% url 'post' post.author post.id %}" role="button">Добавить комментарий</a>
+                                                        {% if user == post.author %}
+                                                        <a class="btn btn-sm text-muted" href="{% url 'post_edit' post.author post.id %}" role="button">Редактировать</a>
+                                                        {% endif %}
+                                                </div>
+                                                <small class="text-muted">{{ post.pub_date }}</small>
+                                        </div>
+                                </div>
+                        </div>
+                    {% endfor %}
+        
+                    {% include "paginator.html" %}
+                </div>
+        </div>
+    </main>
+{% endblock %}
