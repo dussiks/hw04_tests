@@ -97,8 +97,8 @@ class PostsPagesTests(TestCase):
 
     def test_profile_show_correct_context(self):
         """Template profile generated with correct context."""
-        response = (self.authorized_client_bob.get(reverse
-                    ('profile', kwargs={'username': 'bob'})))
+        response = (self.authorized_client_bob.get(reverse(
+                    'profile', args=['bob'],)))
         expected_page_details = {
             PostsPagesTests.post: response.context.get('page')[0],
             PostsPagesTests.posts_quantity: (
