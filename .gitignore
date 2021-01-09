@@ -22,3 +22,5 @@ posts/static/
 db.sqlite3
 
 .coverage
+
+htmlcov/
