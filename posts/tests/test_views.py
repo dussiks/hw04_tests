@@ -19,14 +19,12 @@ class PostsPagesTests(TestCase):
         cls.user_bob = get_user_model().objects.create(username='bob')
 
         cls.group = Group.objects.create(
-            id=1,
             title="First test group title",
             description='About first test group',
             slug='slug_one',
         )
 
         Group.objects.create(
-            id=2,
             title="Second test group title",
             description='About second test group',
             slug='slug_two',
@@ -133,7 +131,8 @@ class PostsPagesTests(TestCase):
 
     def test_post_edit_show_correct_context(self):
         """Template post_edit generated with correct context."""
-        response = self.auth_client_bob.get(reverse('post_edit', args=['bob', 33]))
+        post_edit_url = reverse('post_edit', args=['bob', 33])
+        response = self.auth_client_bob.get(post_edit_url)
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
@@ -147,7 +146,8 @@ class PostsPagesTests(TestCase):
 
     def test_post_show_correct_context(self):
         """"Template post generated with correct context."""
-        response = self.auth_client_john.get(reverse('post', args=['bob', 33]))
+        post_url = reverse('post', args=['bob', 33])
+        response = self.auth_client_john.get(post_url)
         expected_page_details = {
             PostsPagesTests.post: response.context.get('post'),
             PostsPagesTests.posts_count: response.context.get('posts_count'),
@@ -158,7 +158,7 @@ class PostsPagesTests(TestCase):
 
     def test_homepage_show_correct_number_of_posts(self):
         """"Template homepage contains last 10 generated posts."""
-        response = self.auth_client_bob.get(reverse('index'))
+        response = self.auth_client_bob.get(INDEX_URL)
         self.assertEqual(len(response.context['page']), 10)
 
     def test_group_page_show_correct_number_of_posts(self):
@@ -166,5 +166,6 @@ class PostsPagesTests(TestCase):
         to first group.
         """
         group_items = Group.objects.filter(slug='slug_one').count()
-        response = self.auth_client_john.get(reverse('group', args=['slug_one']))
+        group_url = reverse('group', args=['slug_one'])
+        response = self.auth_client_john.get(group_url)
         self.assertEqual(len(response.context['page']), group_items)

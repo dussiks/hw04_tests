@@ -19,14 +19,12 @@ class PostFormTests(TestCase):
         )
 
         Post.objects.create(
-            id=1,
             text='Test first post',
             author=PostFormTests.user,
             group=Group.objects.get(slug='slug_one'),
         )
 
         Post.objects.create(
-            id=2,
             text='Test second post',
             author=PostFormTests.user,
         )
@@ -78,7 +76,7 @@ class PostFormTests(TestCase):
         response = self.auth_client.post(
             reverse('post_edit', args=['pasha', 2]),
             data=form_data,
-            follow=True
+            follow=True,
         )
         self.assertRedirects(response, reverse('post', args=['pasha', 2]))
         self.assertContains(response, 'Edited')

@@ -36,11 +36,9 @@ class PostsURLTests(TestCase):
         self.auth_client_bob.force_login(PostsURLTests.user_bob)
         self.auth_client_john = Client()
         self.auth_client_john.force_login(PostsURLTests.user_john)
-        self.url_dict = {
-            'profile_url': '/bob/',
-            'post_url': '/bob/14/',
-            'post_edit_url': '/bob/14/edit/',
-        }
+        self.profile_url = '/bob/'
+        self.post_url = '/bob/14/'
+        self.post_edit_url = '/bob/14/edit/'
 
     def test_urls_uses_correct_template(self):
         """URL-address uses corresponding template."""
@@ -48,9 +46,9 @@ class PostsURLTests(TestCase):
             INDEX_URL: 'index.html',
             NEW_URL: 'posts/new.html',
             GROUP_URL: 'group.html',
-            self.url_dict['profile_url']: 'profile.html',
-            self.url_dict['post_url']: 'post.html',
-            self.url_dict['post_edit_url']: 'posts/new.html',
+            self.profile_url: 'profile.html',
+            self.post_url: 'post.html',
+            self.post_edit_url: 'posts/new.html',
             }
         for url_name, template in templates_url_names.items():
             with self.subTest(template=template):
@@ -63,9 +61,9 @@ class PostsURLTests(TestCase):
             INDEX_URL: 200,
             NEW_URL: 302,
             GROUP_URL: 200,
-            self.url_dict['profile_url']: 200,
-            self.url_dict['post_url']: 200,
-            self.url_dict['post_edit_url']: 302,
+            self.profile_url: 200,
+            self.post_url: 200,
+            self.post_edit_url: 302,
             }
         for url_name, value in templates_url_names.items():
             with self.subTest(value=value):
@@ -80,9 +78,9 @@ class PostsURLTests(TestCase):
             INDEX_URL: 200,
             NEW_URL: 200,
             GROUP_URL: 200,
-            self.url_dict['profile_url']: 200,
-            self.url_dict['post_url']: 200,
-            self.url_dict['post_edit_url']: 200,
+            self.profile_url: 200,
+            self.post_url: 200,
+            self.post_edit_url: 200,
             }
         for url_name, value in templates_url_names.items():
             with self.subTest(url_name=url_name):
@@ -90,11 +88,10 @@ class PostsURLTests(TestCase):
                 self.assertEqual(response.status_code, value)
 
     def test_post_edit_url_not_permitted_for_authorized_user_not_author(self):
-        """URL-address /bob/14/edit/ is not permitted for authorized user
+        """URL-address for post edit is not permitted for authorized user
         but not post author.
         """
-        test_url = self.url_dict['post_edit_url']
-        response = self.auth_client_john.get(test_url)
+        response = self.auth_client_john.get(self.post_edit_url)
         self.assertEqual(response.status_code, 302)
 
     def test_new_url_redirect_anonymous_user(self):
@@ -109,14 +106,12 @@ class PostsURLTests(TestCase):
         """After calling url for post edit by unauthorized user he is
         redirected to post viewing page.
         """
-        test_url = self.url_dict['post_edit_url']
-        response = self.guest_client.get(test_url, follow=True)
+        response = self.guest_client.get(self.post_edit_url, follow=True)
         self.assertRedirects(response, '/bob/14/')
 
     def test_post_edit_url_redirect_authorized_user_not_author(self):
         """After calling url for post edit by authorized but not
         post author user he is redirected to post viewing page.
         """
-        test_url = self.url_dict['post_edit_url']
-        response = self.auth_client_john.get(test_url, follow=True)
+        response = self.auth_client_john.get(self.post_edit_url, follow=True)
         self.assertRedirects(response, '/bob/14/')
