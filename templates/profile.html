@@ -7,10 +7,10 @@
                         <div class="card">
                                 <div class="card-body">
                                         <div class="h2">
-                                            {{ username.get_full_name }}
+                                            {{ author.get_full_name }}
                                         </div>
                                         <div class="h3 text-muted">
-                                                @{{ username.username }}
+                                                @{{ author.username }}
                                         </div>
                                 </div>
                                 <ul class="list-group list-group-flush">
@@ -22,7 +22,7 @@
                                         </li>
                                         <li class="list-group-item">
                                                 <div class="h6 text-muted">
-                                                    Записей: {{ posts_quantity }}
+                                                    Записей: {{ posts_count }}
                                                 </div>
                                         </li>
                                 </ul>

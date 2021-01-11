@@ -9,12 +9,13 @@ from .models import Group, Post, User
 
 def index(request):
     """Return 10 posts per page beginning from last."""
-    post_list = Post.objects.select_related('group').order_by('-pub_date')
+    post_list = Post.objects.select_related('group')
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     context = {"page": page, "paginator": paginator}
     return render(request, "index.html", context)
+
 
 def group_posts(request, slug):
     """Return 10 posts per page in group beginning from last."""
@@ -27,8 +28,9 @@ def group_posts(request, slug):
         "group": group,
         "page": page,
         "paginator": paginator,
-        }
+    }
     return render(request, "group.html", context)
+
 
 @login_required
 def new_post(request):
@@ -41,43 +43,46 @@ def new_post(request):
     context = {'form': form, 'is_edit': False}
     return render(request, 'posts/new.html', context)
 
+
 def profile(request, username):
-    username = get_object_or_404(User, username=username)
-    user_post_list = username.posts.all().order_by('-pub_date')
-    paginator = Paginator(user_post_list, 10)
+    author = get_object_or_404(User, username=username)
+    author_posts_list = author.posts.all()
+    paginator = Paginator(author_posts_list, 10)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    posts_quantity = username.posts.count()
+    posts_count = author.posts.count()
     context = {
         "page": page,
-        "username": username,
+        "author": author,
         "paginator": paginator,
-        "posts_quantity": posts_quantity,
-        }
+        "posts_count": posts_count,
+    }
     return render(request, 'profile.html', context)
 
+
 def post_view(request, username, post_id):
-    username = get_object_or_404(User, username=username)
-    post = username.posts.get(id=post_id)
-    posts_quantity = username.posts.count()
+    author = get_object_or_404(User, username=username)
+    post = get_object_or_404(Post, author__username=username, id=post_id)
+    posts_count = author.posts.count()
     context = {
         "post": post,
-        "posts_quantity": posts_quantity,
-        "username": username,
-        }
+        "posts_count": posts_count,
+        "author": author,
+    }
     return render(request, 'post.html', context)
 
+
 def post_edit(request, username, post_id):
-    username = get_object_or_404(User, username=username)
-    post = get_object_or_404(Post, author=username, id=post_id)
-    if request.user != username:
-        return redirect(reverse('post', args=[username, post_id]))
+    post = get_object_or_404(Post, author__username=username, id=post_id)
+    if request.user != post.author:
+        return redirect('post', username=username, post_id=post_id)
     form = PostForm(data=request.POST or None, instance=post)
     if request.method == 'POST' and form.is_valid():
         form.save()
-        return redirect(reverse('post', args=[username, post_id]))
+        return redirect('post', username=username, post_id=post_id)
     context = {
         "form": form,
         "is_edit": True,
-        "post": post}
+        "post": post,
+    }
     return render(request, 'posts/new.html', context)

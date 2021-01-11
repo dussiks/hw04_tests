@@ -8,12 +8,10 @@ class PostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        Post.objects.create(
-            id=1,
+        cls.post = Post.objects.create(
             author=get_user_model().objects.create(username='VovaPanov'),
             text='Тестовый текст',
         )
-        cls.post = Post.objects.get(id=1)
 
     def test_verbose_name(self):
         """verbose_name field content equals with desired."""
@@ -52,13 +50,11 @@ class GroupModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        Group.objects.create(
-            pk=1,
+        cls.group = Group.objects.create(
             title='test title!',
             description='Описание тестовой группы',
             slug='test_slug',
         )
-        cls.group = Group.objects.get(pk=1)
 
     def test_verbose_name(self):
         """verbose_name field content equals with desired."""
@@ -90,6 +86,5 @@ class GroupModelTest(TestCase):
         """
         In __str__ field of group object written value of group.title field.
         """
-        group = GroupModelTest.group
-        expected_object_name = group.title
-        self.assertEqual(expected_object_name, str(group))
+        expected_object_name = GroupModelTest.group.title
+        self.assertEqual(expected_object_name, str(GroupModelTest.group))

@@ -7,103 +7,100 @@ from django import forms
 from posts.models import Group, Post
 
 
+INDEX_URL = reverse('index')
+NEW_URL = reverse('new')
+
+
 class PostsPagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        user = get_user_model()
-        cls.user_john = user.objects.create(username='john')
-        cls.user_bob = user.objects.create(username='bob')
+        cls.user_john = get_user_model().objects.create(username='john')
+        cls.user_bob = get_user_model().objects.create(username='bob')
 
-        Group.objects.create(
+        cls.group = Group.objects.create(
             id=1,
             title="First test group title",
             description='About first test group',
-            slug='test_slug_one',
+            slug='slug_one',
         )
 
         Group.objects.create(
             id=2,
             title="Second test group title",
             description='About second test group',
-            slug='test_slug_two',
+            slug='slug_two',
         )
 
-        cls.group = Group.objects.get(slug='test_slug_one')
-
+        posts_list = []
         for i in range(1, 15):
-            Post.objects.create(
+            posts_list.append(Post(
                 text='Test post ' + str(i) + ' number',
                 author=cls.user_bob,
-        )
+            ))
+        Post.objects.bulk_create(posts_list)
 
         Post.objects.create(
             id=31,
             text='Test john first post',
             author=cls.user_john,
-            group=Group.objects.get(slug='test_slug_two'),
+            group=Group.objects.get(slug='slug_two'),
         )
 
         Post.objects.create(
             id=32,
             text='Test john second post',
             author=cls.user_john,
-            group=Group.objects.get(slug='test_slug_two'),
+            group=Group.objects.get(slug='slug_two'),
         )
 
-        Post.objects.create(
+        cls.post = Post.objects.create(
             id=33,
             text='Test bob uniq post',
             author=cls.user_bob,
-            group=Group.objects.get(slug='test_slug_one'),
+            group=Group.objects.get(slug='slug_one'),
         )
-
-        cls.post = Post.objects.get(id=33)
 
         cls.all_posts = Post.objects.all()
 
-        cls.posts_quantity = cls.user_bob.posts.count()
+        cls.posts_count = cls.user_bob.posts.count()
 
     def setUp(self):
         self.guest_client = Client()
-        self.authorized_client_bob = Client()
-        self.authorized_client_bob.force_login(PostsPagesTests.user_bob)
-        self.authorized_client_john = Client()
-        self.authorized_client_john.force_login(PostsPagesTests.user_john)
+        self.auth_client_bob = Client()
+        self.auth_client_bob.force_login(PostsPagesTests.user_bob)
+        self.auth_client_john = Client()
+        self.auth_client_john.force_login(PostsPagesTests.user_john)
 
     def test_pages_uses_correct_template(self):
         """Each view-name uses corresponding template."""
         templates_page_names = {
-            'index.html': reverse('index'),
-            'posts/new.html': reverse('new'),
-            'group.html': reverse('group', kwargs={'slug': 'test_slug_one'}),
-            'profile.html': reverse('profile', kwargs={'username': 'bob'}),
-            'post.html': (reverse('post',
-                          kwargs={'username': 'bob', 'post_id': 33})),
-            'posts/new.html': (reverse('post_edit',
-                               kwargs={'username': 'bob', 'post_id': 33})),
+            'index.html': INDEX_URL,
+            'posts/new.html': NEW_URL,
+            'group.html': reverse('group', args=['slug_one']),
+            'profile.html': reverse('profile', args=['bob']),
+            'post.html': reverse('post', args=['bob', 33]),
+            'posts/new.html': reverse('post_edit', args=['bob', 33]),
         }
         for template, reverse_name in templates_page_names.items():
             with self.subTest(template=template):
-                response = self.authorized_client_bob.get(reverse_name)
+                response = self.auth_client_bob.get(reverse_name)
                 self.assertTemplateUsed(response, template)
 
     def test_homepage_show_correct_context(self):
         """Template homepage generated with correct context."""
-        response = self.authorized_client_bob.get(reverse('index'))
+        response = self.auth_client_bob.get(INDEX_URL)
         expected_post = PostsPagesTests.post
         actual_post = response.context.get('page')[0]
         self.assertEqual(actual_post, expected_post)
 
     def test_profile_show_correct_context(self):
         """Template profile generated with correct context."""
-        response = (self.authorized_client_bob.get(reverse(
-                    'profile', args=['bob'],)))
+        response = self.auth_client_bob.get(reverse('profile', args=['bob']))
         expected_page_details = {
             PostsPagesTests.post: response.context.get('page')[0],
-            PostsPagesTests.posts_quantity: (
-                response.context.get('posts_quantity')),
-            PostsPagesTests.user_bob: response.context.get('username'),
+            PostsPagesTests.posts_count: response.context.get('posts_count'),
+            PostsPagesTests.user_bob: response.context.get('author'),
         }
         for key, value in expected_page_details.items():
             with self.subTest(key=key):
@@ -111,8 +108,7 @@ class PostsPagesTests(TestCase):
 
     def test_group_page_show_correct_context(self):
         """Template group generated with correct context."""
-        response = (self.authorized_client_bob.get(reverse('group',
-                    kwargs={'slug': 'test_slug_one'})))
+        response = self.auth_client_bob.get(reverse('group', args=['slug_one']))
         expected_page_details = {
             PostsPagesTests.post: response.context.get('page')[0],
             PostsPagesTests.group: response.context.get('group'),
@@ -123,7 +119,7 @@ class PostsPagesTests(TestCase):
 
     def test_new_page_show_correct_context(self):
         """Template new generated with correct context."""
-        response = self.authorized_client_bob.get(reverse('new'))
+        response = self.auth_client_bob.get(NEW_URL)
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
@@ -137,8 +133,7 @@ class PostsPagesTests(TestCase):
 
     def test_post_edit_show_correct_context(self):
         """Template post_edit generated with correct context."""
-        response = (self.authorized_client_bob.get(reverse('post_edit',
-                    args=['bob', 33])))
+        response = self.auth_client_bob.get(reverse('post_edit', args=['bob', 33]))
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
@@ -152,12 +147,10 @@ class PostsPagesTests(TestCase):
 
     def test_post_show_correct_context(self):
         """"Template post generated with correct context."""
-        response = (self.authorized_client_john.get(reverse('post',
-                    kwargs={'username': 'bob', 'post_id': 33})))
+        response = self.auth_client_john.get(reverse('post', args=['bob', 33]))
         expected_page_details = {
             PostsPagesTests.post: response.context.get('post'),
-            PostsPagesTests.posts_quantity: (
-                response.context.get('posts_quantity')),
+            PostsPagesTests.posts_count: response.context.get('posts_count'),
         }
         for key, value in expected_page_details.items():
             with self.subTest(key=key):
@@ -165,14 +158,13 @@ class PostsPagesTests(TestCase):
 
     def test_homepage_show_correct_number_of_posts(self):
         """"Template homepage contains last 10 generated posts."""
-        response = self.authorized_client_bob.get(reverse('index'))
+        response = self.auth_client_bob.get(reverse('index'))
         self.assertEqual(len(response.context['page']), 10)
 
     def test_group_page_show_correct_number_of_posts(self):
         """"Template for first test group contains only posts that belong
         to first group.
         """
-        response = (self.authorized_client_john.get(reverse('group',
-                    kwargs={'slug': 'test_slug_one'})))
-        (self.assertEqual(len(response.context['page']),
-         len(Group.objects.filter(slug='test_slug_one'))))
+        group_items = Group.objects.filter(slug='slug_one').count()
+        response = self.auth_client_john.get(reverse('group', args=['slug_one']))
+        self.assertEqual(len(response.context['page']), group_items)
